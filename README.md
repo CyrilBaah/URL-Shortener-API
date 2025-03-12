@@ -35,9 +35,7 @@ The server will start on **http://localhost:8080**.
 
 **Request:**
 ```json
-{
-  "url": "https://example.com"
-}
+curl -X POST http://localhost:8080/shorten -H "Content-Type: application/json" -d '{"url": "https://example.com"}'
 ```
 
 **Response:**
