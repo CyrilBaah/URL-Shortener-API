@@ -1,29 +1,44 @@
 package router
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/CyrilBaah/URL-Shortener-API/handler"
 )
 
-// HealthCheckHandler responds with "OK" for readiness/liveness probes
+// Middleware to track requests in Prometheus
+func metricsMiddleware(httpRequestsTotal *prometheus.CounterVec) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			httpRequestsTotal.WithLabelValues(r.Method, r.URL.Path).Inc()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// Health check handler
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("🟢 Health check endpoint accessed")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "OK")
+	w.Write([]byte("OK"))
 }
 
-// SetupRouter initializes the API routes
-func SetupRouter() *mux.Router {
-	r := mux.NewRouter().StrictSlash(true) // Ensure strict matching
+// SetupRouter initializes the API routes (Fixed: Adds `/metrics`)
+func SetupRouter(httpRequestsTotal *prometheus.CounterVec) *mux.Router {
+	r := mux.NewRouter().StrictSlash(true)
 
-	// Middleware to log every request
-	r.Use(loggingMiddleware)
+	// Middleware for logging & metrics
+	r.Use(metricsMiddleware(httpRequestsTotal))
 
-	// Register the health check route FIRST to avoid conflicts
+	// Register the Prometheus `/metrics` route
+	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
+	log.Println("✅ Route registered: GET /metrics")
+
+	// Register health check
 	r.HandleFunc("/health", HealthCheckHandler).Methods("GET")
 	log.Println("✅ Route registered: GET /health")
 
@@ -34,25 +49,5 @@ func SetupRouter() *mux.Router {
 	r.HandleFunc("/{shortURL}", handler.ResolveURL).Methods("GET")
 	log.Println("✅ Route registered: GET /{shortURL}")
 
-	// Log all registered routes
-	err := r.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		path, err := route.GetPathTemplate()
-		if err == nil {
-			log.Println("📌 Registered route:", path)
-		}
-		return nil
-	})
-	if err != nil {
-		log.Println("❌ Error listing routes:", err)
-	}
-
 	return r
-}
-
-// Middleware to log incoming requests
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("🔍 Incoming request: %s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
 }
