@@ -19,6 +19,8 @@ help:
 	@echo "  kind-create     Create a Kind cluster"
 	@echo "  kind-delete     Delete the Kind cluster"
 	@echo "  k8s-deploy      Deploy the application to Kubernetes"
+	@echo "  port-forward    Forward service port to localhost"
+	@echo "  clean           Remove all stopped containers and images"
 
 # Build the Go application
 build:
@@ -61,4 +63,18 @@ kind-delete:
 	@kind delete cluster --name $(CLUSTER_NAME)
 	@echo "Kind cluster deleted!"
 
-.PHONY: help build run docker-build docker-run kind-create kind-delete k8s-deploy
+# Make service accessible
+port-forward:
+	@echo "Forwarding service port to localhost..."
+	@kubectl port-forward service/url-shortener 8080:80
+	@echo "Port forwarding active at http://localhost:8080"
+
+# Clean up all stopped containers and images
+clean:
+	@echo "Cleaning up Docker containers and images..."
+	@docker stop $(shell docker ps -aq) || true
+	@docker rm $(shell docker ps -aq) || true
+	@docker rmi $(shell docker images -aq) || true
+	@echo "Cleanup complete!"
+
+.PHONY: help build run docker-build docker-run kind-create kind-delete k8s-deploy port-forward clean

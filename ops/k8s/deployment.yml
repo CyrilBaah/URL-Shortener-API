@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: url-shortener
-          image: url-shortener:latest
+          image: cyrilbaah/url-shortener:latest
           resources:
             limits:
               memory: "1.5Gi"
