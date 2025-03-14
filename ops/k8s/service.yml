@@ -1,40 +1,12 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
   name: url-shortener
-  labels:
-    app: url-shortener
 spec:
-  replicas: 2
   selector:
-    matchLabels:
-      app: url-shortener
-  template:
-    metadata:
-      labels:
-        app: url-shortener
-    spec:
-      containers:
-        - name: url-shortener
-          image: cyrilbaah/url-shortener:latest
-          resources:
-            limits:
-              memory: "1Gi"
-              cpu: "1000m"
-            requests:
-              memory: "500Mi"
-              cpu: "500m"
-          ports:
-            - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 20
+    app: url-shortener
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
