@@ -66,3 +66,6 @@ docker build -t url-shortener-api .
 docker run -p 8080:8080 url-shortener-api
 ```
 
+
+
+curl -v http://localhost:8080/metrics

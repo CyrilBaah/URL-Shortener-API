@@ -64,10 +64,23 @@ kind-delete:
 	@echo "Kind cluster deleted!"
 
 # Make service accessible
-port-forward:
+port-forward-app:
 	@echo "Forwarding service port to localhost..."
 	@kubectl port-forward service/url-shortener 8080:80
 	@echo "Port forwarding active at http://localhost:8080"
+
+# Make prometheus accessible
+port-forward-prometheus:
+	@echo "Forwarding prometheus port to localhost..."
+	@kubectl port-forward service/prometheus 9090:9090
+	@echo "Port forwarding active at http://localhost:9090"
+
+# Make grafana accessible
+port-forward-grafana:
+	@echo "Forwarding grafana port to localhost..."
+	@kubectl port-forward service/grafana 3000:3000
+	@echo "Port forwarding active at http://localhost:3000"
+
 
 # Clean up all stopped containers and images
 clean:
